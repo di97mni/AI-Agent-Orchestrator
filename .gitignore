@@ -1,0 +1,7 @@
+# Project workspaces (git worktrees live here)
+workspaces/
+
+# Claude Code local files
+.claude/memory/
+.claude/plans/
+.claude/current-task

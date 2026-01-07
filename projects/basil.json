@@ -1,0 +1,7 @@
+{
+  "name": "basil",
+  "repo": "git@github.com:di97mni/basil.git",
+  "path": "workspaces/basil",
+  "mainBranch": "master",
+  "agents": ["agent-1", "agent-2", "agent-3"]
+}
