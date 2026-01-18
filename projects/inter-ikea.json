@@ -1,0 +1,7 @@
+{
+  "name": "inter-ikea",
+  "repo": "https://github.com/Inter-IKEA-Digital/ross-sales-and-customer-payments",
+  "path": "workspaces/inter-ikea",
+  "mainBranch": "main",
+  "agents": ["agent-1", "agent-2", "agent-3"]
+}
