@@ -2,7 +2,7 @@ _ta_completions() {
     local cur prev words cword
     _init_completion || return
 
-    local commands="start attach detach stop status list"
+    local commands="start attach pick detach stop status list"
     local orch_dir="$HOME/dev/orchestrator"
 
     case $cword in
