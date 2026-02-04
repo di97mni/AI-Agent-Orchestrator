@@ -230,7 +230,7 @@ case "${1:-}" in
         [[ -z "${2:-}" || -z "${3:-}" ]] && { echo "Usage: $0 attach <project> <agent>"; exit 1; }
         attach_agent "$2" "$3"
         ;;
-    pick)
+    pick|p)
         pick_session
         ;;
     detach)
