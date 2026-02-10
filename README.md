@@ -1,14 +1,14 @@
 # Agent Orchestrator
 
-Manage multiple AI coding agents across projects with centralized status tracking and coordination.
+Manage multiple AI coding agents across projects with centralized session management and coordination.
 
 ## Architecture
 
 ```
 orchestrator/
-├── .claude/commands/       ← Orchestrator commands (/status, /board, /log)
+├── .claude/commands/       ← Orchestrator commands (/setup-project)
 ├── projects/               ← Project configurations (tracked)
-├── status/                 ← Agent activity logs (tracked for backup)
+├── status/                 ← Per-project status directories
 ├── workspaces/             ← Git-ignored (project worktrees live here)
 │   └── {project}/
 │       ├── repo/           ← Main clone (for worktrees + local tests)
@@ -34,19 +34,14 @@ cd ~/dev/orchestrator
 ./tools/tmux-agents.sh start basil
 ```
 
-### 2. Check Status (from orchestrator)
+### 2. Reconnect to a Session
 
 ```bash
-cd ~/dev/orchestrator
-claude
+# Interactive session picker
+./tools/tmux-agents.sh pick    # or: ta p
 
-> /status basil
-```
-
-### 3. View Activity Log
-
-```bash
-> /log basil agent-1
+# Or attach directly
+./tools/tmux-agents.sh attach basil 1
 ```
 
 ## Commands
@@ -55,20 +50,9 @@ claude
 
 | Command | Description |
 |---------|-------------|
-| `/status [project]` | Show all agents status |
-| `/board [project]` | Kanban view of tasks |
-| `/log <project> [agent]` | Show activity log |
-| `/setup-project <name> <url>` | Add new project |
+| `/setup-project <name> <url>` | Add new project with worktrees |
 
-### Agent Commands (run from agent worktree)
-
-| Command | Description |
-|---------|-------------|
-| `/checkin <event> "<msg>"` | Log activity (usually auto-called) |
-| `/claim-task <id>` | Claim task → auto-checkin TASK_CLAIMED |
-| `/implement-task <id>` | Implement subtask → auto-checkin SUBTASK_START/COMPLETE |
-| `/devtest` | Pre-PR review → auto-checkin DEVTEST_* |
-| `/finish-task <id>` | Cleanup → auto-checkin TASK_COMPLETE |
+Agent commands (e.g. `/plan-task`, `/run-task`, `/finish-task`) are project-specific and defined in each workspace's `.claude/commands/`.
 
 ## tmux Session Management
 
@@ -89,44 +73,16 @@ claude
 ./tools/tmux-agents.sh stop basil 1    # Single
 ./tools/tmux-agents.sh stop basil       # All
 
+# Interactive session picker
+./tools/tmux-agents.sh pick             # or: ta p
+
 # View status
 ./tools/tmux-agents.sh status           # All projects
 ./tools/tmux-agents.sh status basil     # Single project
+
+# List all tmux sessions
+./tools/tmux-agents.sh list
 ```
-
-## Activity Log Format
-
-Logs are append-only markdown files in `status/{project}/{agent}.log.md`:
-
-```markdown
-## 2026-01-07T14:32:15Z | SUBTASK_COMPLETE
-- **Agent**: agent-1
-- **Branch**: task-90-room-availability
-- **Task**: 90
-- **Action**: Added 12 API tests for reservation validation
-- **Commit**: abc1234
-
-## 2026-01-07T14:28:00Z | SUBTASK_START
-- **Agent**: agent-1
-- **Branch**: task-90-room-availability
-- **Task**: 90
-- **Action**: Starting subtask 90.3
-- **Commit**: def5678
-```
-
-## Event Types
-
-| Event | Trigger | Description |
-|-------|---------|-------------|
-| `TASK_CLAIMED` | /claim-task | Agent claimed a task |
-| `SUBTASK_START` | /implement-task | Starting a subtask |
-| `SUBTASK_COMPLETE` | /implement-task | Finished a subtask |
-| `BLOCKED` | /checkin | Hit a blocker |
-| `DEVTEST_START` | /devtest | Starting pre-PR review |
-| `DEVTEST_COMPLETE` | /devtest | Finished review |
-| `PR_CREATED` | manual | Created pull request |
-| `TASK_COMPLETE` | /finish-task | All done, cleaned up |
-| `NOTE` | /checkin | General note |
 
 ## Adding a New Project
 
@@ -170,43 +126,9 @@ EOF
 mkdir -p ~/dev/orchestrator/status/myproject
 ```
 
-## Workflow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ORCHESTRATOR (~/dev/orchestrator)                                          │
-│                                                                              │
-│  Human runs:                                                                 │
-│  - /status basil         → See all agents                                   │
-│  - /board basil          → Kanban view                                      │
-│  - /log basil agent-1    → Activity history                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    │ reads status/
-                                    ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  Agent 1        │ │  Agent 2        │ │  Agent 3        │
-│  workspaces/    │ │  workspaces/    │ │  workspaces/    │
-│  basil/agent-1  │ │  basil/agent-2  │ │  basil/agent-3  │
-│                 │ │                 │ │                 │
-│  /claim-task    │ │  /claim-task    │ │  /claim-task    │
-│  /implement-task│ │  /implement-task│ │  /implement-task│
-│  /devtest       │ │  /devtest       │ │  /devtest       │
-│       │         │ │       │         │ │       │         │
-│       ▼         │ │       ▼         │ │       ▼         │
-│  /checkin ──────┼─┼───────┼─────────┼─┼───────┼─────────┤
-└─────────────────┘ └─────────────────┘ └─────────────────┘
-         │                   │                   │
-         └───────────────────┼───────────────────┘
-                             ▼
-                    status/{project}/{agent}.log.md
-                    (committed to orchestrator repo)
-```
-
 ## Backup & Portability
 
-- **Status logs are committed** to the orchestrator repo
-- Clone orchestrator on a new machine to see full history
+- **Project configs are tracked** in the orchestrator repo
 - Workspaces are git-ignored (recreate with /setup-project)
 
 ## Requirements

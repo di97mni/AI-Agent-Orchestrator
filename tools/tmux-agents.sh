@@ -12,7 +12,7 @@ Usage: $(basename "$0") <command> <project> [agent]
 Commands:
   start <project> [agent]   Start agent(s). With agent: start AND attach. Without: start all detached.
   attach <project> <agent>  Attach to existing session (for reconnecting)
-  pick                      Interactive session picker - select from all configured sessions
+  pick, p                   Interactive session picker - select from all configured sessions
   detach <project> <agent>  Detach session from another terminal
   stop <project> [agent]    Stop agent(s)
   status [project]          Show session status
@@ -22,7 +22,7 @@ Examples:
   $(basename "$0") start basil 1        # Start agent-1 and attach (most common)
   $(basename "$0") start basil          # Start all agents (detached)
   $(basename "$0") attach basil 2       # Reconnect to agent-2
-  $(basename "$0") pick                 # Interactive picker for all sessions
+  $(basename "$0") pick                 # Interactive picker for all sessions (alias: p)
   $(basename "$0") stop basil           # Stop all basil agents
   $(basename "$0") status               # Show all sessions
   $(basename "$0") status basil         # Show basil sessions only
