@@ -1,0 +1,7 @@
+{
+  "name": "atl-cli",
+  "repo": "https://github.com/di97mni/atl-cli",
+  "path": "workspaces/atl-cli",
+  "mainBranch": "main",
+  "agents": ["agent-1", "agent-2", "agent-3"]
+}
