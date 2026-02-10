@@ -12,7 +12,7 @@ Usage: $(basename "$0") <command> <project> [agent]
 Commands:
   start <project> [agent]   Start agent(s). With agent: start AND attach. Without: start all detached.
   attach <project> <agent>  Attach to existing session (for reconnecting)
-  pick                      Interactive session picker - select from running sessions
+  pick                      Interactive session picker - select from all configured sessions
   detach <project> <agent>  Detach session from another terminal
   stop <project> [agent]    Stop agent(s)
   status [project]          Show session status
@@ -22,7 +22,7 @@ Examples:
   $(basename "$0") start basil 1        # Start agent-1 and attach (most common)
   $(basename "$0") start basil          # Start all agents (detached)
   $(basename "$0") attach basil 2       # Reconnect to agent-2
-  $(basename "$0") pick                 # Interactive picker for running sessions
+  $(basename "$0") pick                 # Interactive picker for all sessions
   $(basename "$0") stop basil           # Stop all basil agents
   $(basename "$0") status               # Show all sessions
   $(basename "$0") status basil         # Show basil sessions only
@@ -173,34 +173,59 @@ list_sessions() {
 }
 
 pick_session() {
-    local sessions
-    sessions=$(tmux ls -F '#{session_name}' 2>/dev/null)
+    # Build list from project configs (shows all sessions, not just running)
+    local -a entries
+    for config in "$ORCH_DIR/projects/"*.json; do
+        local project
+        project=$(jq -r '.name' "$config")
+        for agent in $(jq -r '.agents[]' "$config" | sed 's/agent-//'); do
+            local session
+            session=$(session_name "$project" "$agent")
+            if tmux has-session -t "$session" 2>/dev/null; then
+                entries+=("$session (RUNNING)")
+            else
+                entries+=("$session (stopped)")
+            fi
+        done
+    done
 
-    if [[ -z "$sessions" ]]; then
-        echo "No tmux sessions running."
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo "No agent sessions configured."
         exit 1
     fi
-
-    # Convert to array
-    local -a session_array
-    mapfile -t session_array <<< "$sessions"
 
     # Use fzf if available, otherwise use select
     if command -v fzf &>/dev/null; then
         local selected
-        selected=$(printf '%s\n' "${session_array[@]}" | fzf --height=40% --reverse --prompt="Select session: ")
+        selected=$(printf '%s\n' "${entries[@]}" | fzf --height=40% --reverse --prompt="Select session: ")
         if [[ -n "$selected" ]]; then
-            tmux attach -t "$selected"
+            # Extract session name (strip status suffix)
+            local session_name_selected="${selected%% (*}"
+            if [[ "$selected" == *"(RUNNING)"* ]]; then
+                tmux attach -t "$session_name_selected"
+            else
+                # Parse project and agent number from session name
+                local proj="${session_name_selected%-agent-*}"
+                local agent_num="${session_name_selected##*-agent-}"
+                start_agent "$proj" "$agent_num" true
+            fi
         fi
     else
-        echo "Select a session to attach:"
+        echo "Select a session:"
         echo ""
-        select session in "${session_array[@]}" "Cancel"; do
-            if [[ "$session" == "Cancel" ]]; then
+        select entry in "${entries[@]}" "Cancel"; do
+            if [[ "$entry" == "Cancel" ]]; then
                 echo "Cancelled."
                 exit 0
-            elif [[ -n "$session" ]]; then
-                tmux attach -t "$session"
+            elif [[ -n "$entry" ]]; then
+                local session_name_selected="${entry%% (*}"
+                if [[ "$entry" == *"(RUNNING)"* ]]; then
+                    tmux attach -t "$session_name_selected"
+                else
+                    local proj="${session_name_selected%-agent-*}"
+                    local agent_num="${session_name_selected##*-agent-}"
+                    start_agent "$proj" "$agent_num" true
+                fi
                 break
             else
                 echo "Invalid selection. Try again."
