@@ -7,8 +7,8 @@ Manage multiple AI coding agents across projects with centralized session manage
 ```
 orchestrator/
 ├── .claude/commands/       ← Orchestrator commands (/setup-project)
-├── projects/               ← Project configurations (tracked)
-├── status/                 ← Per-project status directories
+├── projects/               ← Project configurations (git-ignored, machine-specific)
+├── status/                 ← Per-project status directories (git-ignored)
 ├── workspaces/             ← Git-ignored (project worktrees live here)
 │   └── {project}/
 │       ├── repo/           ← Main clone (for worktrees + local tests)
@@ -128,8 +128,8 @@ mkdir -p ~/dev/orchestrator/status/myproject
 
 ## Backup & Portability
 
-- **Project configs are tracked** in the orchestrator repo
-- Workspaces are git-ignored (recreate with /setup-project)
+- Project configs, status dirs, and workspaces are git-ignored (machine-specific)
+- Recreate with `/setup-project`
 
 ## Requirements
 

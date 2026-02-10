@@ -1,6 +1,10 @@
 # Project workspaces (git worktrees live here)
 workspaces/
 
+# Machine-specific project configs and status
+projects/
+status/
+
 # Claude Code local files
 .claude/memory/
 .claude/plans/

@@ -1,7 +1,0 @@
-{
-  "name": "homelab",
-  "repo": "https://github.com/di97mni/homelab",
-  "path": "workspaces/homelab",
-  "mainBranch": "main",
-  "agents": ["agent-1", "agent-2"]
-}
